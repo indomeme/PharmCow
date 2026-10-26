@@ -1,0 +1,14 @@
+.venv/
+.tools/
+.uv-cache/
+.uv-python/
+.uv-python-cache/
+data/*
+!data/.gitkeep
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.env

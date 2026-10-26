@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Run {{ run.id[:8] }} · PharmCOW{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <a class="back" href="/">← All runs</a>
+    <h1>Run <span class="mono">{{ run.id[:8] }}</span></h1>
+    <p class="muted truncate" title="{{ run.filename }}">{{ run.filename }}</p>
+  </div>
+  <div class="chips">
+    <span class="chip">{{ run.assembly or "detecting…" }}</span>
+    <span class="chip">{{ run.n_samples or "?" }} sample(s)</span>
+    <span class="chip">phased</span>
+  </div>
+</div>
+
+<section class="card">
+  {% include "_status.html" %}
+</section>
+
+{% endblock %}

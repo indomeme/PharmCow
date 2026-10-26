@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}PharmCOW · new run{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Pharmacogenomics · VCF → report</p>
+    <h1>Turn an imputed VCF into a PGx report.</h1>
+    <p class="lede">
+      Star-allele calling with <strong>pypgx 0.27</strong>, recommendations from the
+      public <strong>CPIC</strong> tables, and a print-ready PDF. Runs locally;
+      your VCF stays on this machine.
+    </p>
+    <ul class="checklist">
+      <li>Fully-phased, bgzipped VCF with a tabix index</li>
+      <li>GRCh37 or GRCh38; up to 96 samples per file</li>
+      <li>58 pharmacogenes · CPIC level + guideline links</li>
+    </ul>
+  </div>
+
+  <form id="upload-form" class="card upload-card" method="post" action="/upload" enctype="multipart/form-data">
+    <h2>New run</h2>
+    <label id="dropzone" class="dropzone" for="vcf-input">
+      <input id="vcf-input" type="file" name="vcf" accept=".gz,.vcf,.vcf.gz" required>
+      <span class="drop-icon" aria-hidden="true">↑</span>
+      <span class="drop-title">Drop a VCF here or click to browse</span>
+      <span class="drop-hint">.vcf.gz · phased · indexed</span>
+    </label>
+    <div id="file-name" class="file-name">No file selected</div>
+
+    <details class="advanced">
+      <summary>Options</summary>
+      <div class="field-grid">
+        <label class="field">Assembly
+          <select name="assembly">
+            <option value="auto">Auto-detect</option>
+            <option value="GRCh38">GRCh38</option>
+            <option value="GRCh37">GRCh37</option>
+          </select>
+        </label>
+        <label class="field">Index (.tbi, optional)
+          <input type="file" name="tbi" accept=".tbi,.csi">
+        </label>
+      </div>
+    </details>
+
+    <button id="submit-btn" type="submit" disabled>
+      <span class="btn-label">Upload &amp; run</span>
+    </button>
+    <p class="form-note">pypgx can take a few minutes; this page will track progress.</p>
+  </form>
+</section>
+
+<section class="card runs-card">
+  <div class="card-head">
+    <h2>Recent runs</h2>
+    {% if runs %}<span class="muted small">{{ runs | length }} shown</span>{% endif %}
+  </div>
+
+  {% if runs %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Run</th><th>File</th><th>Assembly</th><th>Samples</th><th>Status</th><th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td><a class="mono-link" href="/runs/{{ run.id }}">{{ run.id[:8] }}</a></td>
+        <td class="truncate" title="{{ run.filename }}">{{ run.filename }}</td>
+        <td>{{ run.assembly or "—" }}</td>
+        <td>{{ run.n_samples or "—" }}</td>
+        <td><span class="pill {{ run.status }}">{{ run.status }}</span></td>
+        <td class="muted small">{{ run.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">
+    <p><strong>No runs yet.</strong></p>
+    <p class="muted">Upload a phased VCF above to generate the first report.</p>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}

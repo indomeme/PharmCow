@@ -1,0 +1,78 @@
+<div id="status"
+  {% if run.status in ("queued", "running") %}
+  hx-get="/runs/{{ run.id }}/status" hx-trigger="every 2s" hx-swap="outerHTML"
+  {% endif %}>
+
+  <div class="status-head">
+    <span class="pill {{ run.status }}">{{ run.status }}</span>
+    {% if run.status in ("queued", "running") %}
+    <span class="muted">stage: <strong>{{ run.stage }}</strong></span>
+    <span class="spinner" aria-hidden="true"></span>
+    {% elif run.status == "failed" %}
+    <span class="muted">failed at <strong>{{ run.stage }}</strong></span>
+    {% else %}
+    <span class="muted">completed {{ run.finished_at.strftime("%Y-%m-%d %H:%M") if run.finished_at else "" }}</span>
+    {% endif %}
+  </div>
+
+  <ol class="steps">
+    {% for key, label in stages %}
+    {% set i = loop.index0 %}
+    {% set completed = run.status == "done" or i < stage_index %}
+    {% set current = i == stage_index and run.status in ("queued", "running") %}
+    {% set failed = i == stage_index and run.status == "failed" %}
+    <li class="{% if completed %}done{% elif failed %}failed{% elif current %}active{% else %}pending{% endif %}">
+      <span class="step-dot"></span>
+      <span class="step-label">{{ label }}</span>
+    </li>
+    {% endfor %}
+  </ol>
+
+  {% if run.status in ("queued", "running") %}
+  <div class="progress"><div class="bar"></div></div>
+  <p class="muted small">This page refreshes automatically. pypgx runs 58 genes and can take a few minutes.</p>
+  {% endif %}
+
+  {% if run.status == "failed" %}
+  <div class="error"><strong>Run failed.</strong> {{ run.error }}</div>
+  <ul class="hints small muted">
+    <li>VCF must be bgzipped, indexed and fully phased (imputed output is usually phased).</li>
+    <li>Check that the VCF contains the gene regions and has no missing genotypes.</li>
+    <li>Try assembly “auto” or set GRCh37/GRCh38 explicitly.</li>
+  </ul>
+  {% endif %}
+
+  {% if run.status == "done" %}
+  <div class="mini-grid">
+    <div class="mini"><b>{{ totals.samples }}</b><span>samples</span></div>
+    <div class="mini"><b>{{ totals.drugs }}</b><span>recommendations</span></div>
+    <div class="mini"><b>{{ totals.level_a }}</b><span>CPIC level A</span></div>
+  </div>
+
+  <table class="table samples-table">
+    <thead>
+      <tr><th>Barcode</th><th>Genes called</th><th>Recommendations</th><th>CPIC A</th><th>Report</th></tr>
+    </thead>
+    <tbody>
+      {% for sample in samples %}
+      {% set rep = reports.get(sample.id) %}
+      <tr>
+        <td class="mono">{{ sample.barcode }}</td>
+        <td>{{ sample.star.values() | selectattr("callable") | list | length }} / {{ sample.star | length }}</td>
+        <td>{{ sample.recs | length }}</td>
+        <td>{{ sample.recs | selectattr("cpic_level", "equalto", "A") | list | length }}</td>
+        <td class="actions-cell">
+          {% if rep and rep.html_path %}
+          <a class="btn small" href="/runs/{{ run.id }}/report/{{ sample.id }}">View report</a>
+          {% endif %}
+          {% if rep and rep.pdf_path %}
+          <a class="btn small ghost" href="/runs/{{ run.id }}/report/{{ sample.id }}/pdf">PDF</a>
+          {% endif %}
+          {% if not rep %}<span class="muted small">rendering…</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>

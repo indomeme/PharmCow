@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}PharmCOW{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark">PC</span>
+        <span>PharmCOW</span>
+      </a>
+      <nav class="nav">
+        <a href="/">Runs</a>
+        <a href="/#upload">New run</a>
+        <a href="/healthz">Health</a>
+      </nav>
+      <span class="tag">personal · not clinical</span>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <span>PharmCOW {{ version if version else "" }} · pypgx + CPIC public data</span>
+    <span>Research / educational use only — not medical advice.</span>
+  </footer>
+</body>
+</html>

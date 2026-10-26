@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ sample.barcode }} · report · PharmCOW{% endblock %}
+{% block content %}
+
+<div class="report-toolbar">
+  <div>
+    <a class="back" href="/runs/{{ run.id }}">← Back to run</a>
+    <h1>{{ sample.barcode }}</h1>
+    <p class="muted small">{{ run.filename }} · {{ run.assembly }}</p>
+  </div>
+  <div class="toolbar-actions">
+    <a class="btn ghost" href="/runs/{{ run.id }}/report/{{ sample.id }}/raw" target="_blank" rel="noopener">Open HTML</a>
+    {% if has_pdf %}
+    <a class="btn primary" href="/runs/{{ run.id }}/report/{{ sample.id }}/pdf">Download PDF</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="report-frame-wrap">
+  <iframe class="report-frame" src="/runs/{{ run.id }}/report/{{ sample.id }}/raw" title="PGx report for {{ sample.barcode }}"></iframe>
+</div>
+
+{% endblock %}

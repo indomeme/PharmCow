@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PGx report · {{ barcode }}</title>
+<meta name="author" content="PharmCOW">
+<meta name="description" content="Pharmacogenomics report generated from public pypgx and CPIC data (research use only).">
+<style>
+  @page {
+    size: A4;
+    margin: 21mm 16mm 19mm;
+    @top-left {
+      content: "PharmCOW · Pharmacogenomics report";
+      font: 7.5pt "Noto Sans", sans-serif;
+      color: #6b7280;
+    }
+    @top-right {
+      content: "Research / educational use only";
+      font: 7.5pt "Noto Sans", sans-serif;
+      color: #9a6a00;
+    }
+    @bottom-left {
+      content: "pypgx + CPIC public data";
+      font: 7pt "Noto Sans", sans-serif;
+      color: #9ca3af;
+    }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font: 7pt "Noto Sans", sans-serif;
+      color: #6b7280;
+    }
+  }
+  @page :first {
+    @top-left { content: none; }
+    @top-right { content: none; }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Noto Sans", "DejaVu Sans", sans-serif;
+    font-size: 9.2pt;
+    line-height: 1.42;
+    color: #17211c;
+    background: #eef1f0;
+  }
+  .sheet {
+    background: #fff;
+    width: 100%;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 0;
+  }
+  @media screen {
+    .sheet { margin: 20px auto; padding: 0; box-shadow: 0 8px 30px rgba(0,0,0,.12); }
+    body { padding: 0 12px; }
+  }
+
+  /* ---------- header ---------- */
+  .cover {
+    background: #0f3d2e;
+    color: #fff;
+    padding: 12mm 12mm 10mm;
+    margin: 0 -0mm;
+  }
+  .brandline { display: table; width: 100%; }
+  .brandline .brand {
+    display: table-cell;
+    font-weight: 700;
+    letter-spacing: .08em;
+    font-size: 9pt;
+    text-transform: uppercase;
+  }
+  .brandline .conf {
+    display: table-cell;
+    text-align: right;
+    font-size: 7pt;
+    letter-spacing: 0;
+    color: #c9e6d4;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 22pt;
+    line-height: 1.15;
+    margin: 8mm 0 2mm;
+    font-weight: 650;
+  }
+  .cover .sub {
+    color: #c9e6d4;
+    font-size: 9pt;
+    margin-bottom: 7mm;
+  }
+  .subject { display: table; width: 100%; border-top: 1px solid rgba(255,255,255,.22); padding-top: 4mm; }
+  .subject > div { display: table-cell; width: 33%; vertical-align: top; }
+  .subject .label {
+    display: block;
+    font-size: 6.8pt;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #9fd0b4;
+    margin-bottom: 1mm;
+  }
+  .subject .value { font-size: 9.5pt; font-weight: 600; color: #fff; }
+  .mono { font-family: "DejaVu Sans Mono", monospace; font-size: 8.6pt; }
+
+  /* ---------- summary ---------- */
+  .summary { padding: 8mm 12mm 0; }
+  table.cards { width: 100%; border-collapse: separate; border-spacing: 3mm 0; margin: 0 -3mm; }
+  table.cards td {
+    width: 25%;
+    border: 1px solid #dfe7e3;
+    border-radius: 2mm;
+    padding: 3.5mm 4mm;
+    vertical-align: top;
+    background: #fbfdfc;
+  }
+  .num { font-size: 17pt; font-weight: 700; color: #0f3d2e; line-height: 1.1; }
+  .cap { font-size: 7.4pt; color: #5b6b63; text-transform: uppercase; letter-spacing: .06em; margin-top: 1mm; }
+  .num.warn { color: #a16207; }
+  .num.bad { color: #b91c1c; }
+
+  /* ---------- content ---------- */
+  .content { padding: 0 12mm 10mm; }
+  .disclaimer {
+    margin: 7mm 0 2mm;
+    background: #fff8e6;
+    border-left: 3px solid #d99a00;
+    padding: 3mm 4mm;
+    font-size: 8.3pt;
+    color: #5c4708;
+  }
+  .block { margin-top: 8mm; }
+  .block.drugs { break-before: page; }
+  h2 {
+    font-size: 13pt;
+    margin: 0 0 3mm;
+    break-after: avoid;
+    color: #0f3d2e;
+    padding-bottom: 1.4mm;
+    border-bottom: 1.4px solid #0f3d2e;
+  }
+  h3 {
+    font-size: 9.6pt;
+    margin: 5mm 0 1.6mm;
+    color: #243b30;
+  }
+  h3 .count {
+    display: inline-block;
+    background: #e8f1ec;
+    color: #0f3d2e;
+    border-radius: 9px;
+    padding: 0 6px;
+    font-size: 7.5pt;
+    margin-left: 2mm;
+  }
+
+  table.grid { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
+  table.grid thead { display: table-header-group; }
+  table.grid th {
+    text-align: left;
+    font-size: 7pt;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #5b6b63;
+    background: #f1f5f3;
+    border-bottom: 1px solid #cfdad4;
+    padding: 1.7mm 2mm;
+  }
+  table.grid td {
+    padding: 1.25mm 2mm;
+    border-bottom: 1px solid #e6ece9;
+    vertical-align: top;
+  }
+  table.grid tr { break-inside: avoid; }
+  table.grid tbody tr:nth-child(even) td { background: #fbfcfb; }
+  .genes td:nth-child(1) { width: 17%; font-weight: 600; }
+  .genes td:nth-child(2) { width: 23%; font-family: "DejaVu Sans Mono", monospace; font-size: 8.2pt; }
+  .genes td:nth-child(3) { width: 42%; }
+  .genes td:nth-child(4) { width: 18%; }
+  .drugs td:nth-child(1) { width: 15%; font-weight: 600; }
+  .drugs td:nth-child(2) { width: 21%; line-height: 1.35; }
+  .drugs td:nth-child(3) { width: 56%; font-size: 8.6pt; line-height: 1.38; }
+  .drugs td:nth-child(4) { width: 8%; text-align: center; }
+
+  .dot {
+    display: inline-block;
+    width: 2.2mm;
+    height: 2.2mm;
+    border-radius: 50%;
+    margin-right: 1.6mm;
+    vertical-align: 0.2mm;
+  }
+  .dot.normal { background: #15803d; }
+  .dot.intermediate { background: #ca8a04; }
+  .dot.high { background: #b91c1c; }
+  .dot.unknown { background: #9ca3af; }
+
+  .pill {
+    display: inline-block;
+    border: 1px solid #cfdad4;
+    border-radius: 9px;
+    padding: 0.2mm 2mm;
+    font-size: 7.2pt;
+    color: #375245;
+  }
+  .pill.a { border-color: #0f3d2e; color: #0f3d2e; font-weight: 700; }
+  .pill.na { border-color: #d1d5db; color: #6b7280; }
+  .muted { color: #6b7280; }
+  .small { font-size: 7.6pt; }
+  .no-call { color: #9ca3af; }
+  a { color: #0b5c3f; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .notes { font-size: 8.4pt; color: #374151; padding-left: 4mm; }
+  .notes li { margin-bottom: 1.2mm; }
+
+  .report-foot {
+    margin: 10mm 12mm 0;
+    padding-top: 2.5mm;
+    border-top: 1px solid #dfe7e3;
+    font-size: 7.2pt;
+    color: #6b7280;
+    display: table;
+    width: calc(100% - 24mm);
+  }
+  .report-foot span { display: table-cell; }
+  .report-foot span:last-child { text-align: right; }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="cover">
+    <div class="brandline">
+      <span class="brand">PharmCOW</span>
+      <span class="conf">Research use only</span>
+    </div>
+    <h1>Pharmacogenomics report</h1>
+    <div class="sub">Star-allele calls and CPIC recommendations from public data</div>
+    <div class="subject">
+      <div>
+        <span class="label">Sample</span>
+        <span class="value mono">{{ barcode }}</span>
+      </div>
+      <div>
+        <span class="label">Assembly</span>
+        <span class="value">{{ assembly }}</span>
+      </div>
+      <div>
+        <span class="label">Generated</span>
+        <span class="value">{{ generated_at }}</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="summary">
+    <table class="cards">
+      <tr>
+        <td>
+          <div class="num">{{ summary.genes_called }}<span class="small muted">/{{ summary.genes_total }}</span></div>
+          <div class="cap">Genes called</div>
+        </td>
+        <td>
+          <div class="num">{{ summary.drug_count }}</div>
+          <div class="cap">Drug recommendations</div>
+        </td>
+        <td>
+          <div class="num{{ ' warn' if summary.level_counts.get('A', 0) else '' }}">{{ summary.level_counts.get('A', 0) }}</div>
+          <div class="cap">CPIC level A</div>
+        </td>
+        <td>
+          <div class="num{{ ' bad' if summary.indeterminate else '' }}">{{ summary.indeterminate | length }}</div>
+          <div class="cap">Not callable</div>
+        </td>
+      </tr>
+    </table>
+  </section>
+
+  <div class="content">
+    <div class="disclaimer">
+      <strong>Not for clinical use.</strong> This report is generated automatically from
+      public pypgx star-allele definitions and CPIC recommendations. It is for research
+      and education only; it is not a diagnostic result and must not be used to guide
+      treatment. Consult a qualified clinician.
+    </div>
+
+    <section class="block">
+      <h2>Gene results</h2>
+      <table class="grid genes">
+        <thead>
+          <tr><th>Gene</th><th>Diplotype</th><th>Phenotype</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for g in genes %}
+          <tr>
+            <td>{{ g.gene }}</td>
+            <td>{{ g.genotype }}</td>
+            <td><span class="dot {{ g.tone }}"></span>{{ g.phenotype }}</td>
+            <td>
+              {% if g.callable %}
+              <span class="pill">called</span>
+              {% else %}
+              <span class="pill na">not callable</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block drugs">
+      <h2>Drug recommendations</h2>
+      {% if drug_groups %}
+        {% for group in drug_groups %}
+        <h3>
+          {% if group.level == 'Other' %}Other CPIC levels{% else %}CPIC level {{ group.level }}{% endif %}
+          <span class="count">{{ group.drugs | length }}</span>
+        </h3>
+        <table class="grid drugs">
+          <thead>
+            <tr><th>Drug</th><th>Gene / phenotype</th><th>Recommendation</th><th>Level</th></tr>
+          </thead>
+          <tbody>
+            {% for d in group.drugs %}
+            <tr>
+              <td>{{ d.drug }}</td>
+              <td>
+                {% for pair in d.genes %}
+                {{ pair.gene }} <span class="muted small">· {{ pair.phenotype }}</span>{% if not loop.last %}<br>{% endif %}
+                {% endfor %}
+              </td>
+              <td>
+                {{ d.recommendation }}
+                {% if d.guideline %}
+                <br><a class="small" href="{{ d.guideline }}">CPIC guideline</a>
+                {% endif %}
+              </td>
+              <td>
+                {% if group.level == 'Other' %}
+                <span class="pill na">{{ d.cpic_level or '—' }}</span>
+                {% else %}
+                <span class="pill{{ ' a' if group.level == 'A' else '' }}">{{ group.level }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endfor %}
+      {% else %}
+        <p class="muted">No CPIC recommendation matched the called phenotypes.</p>
+      {% endif %}
+    </section>
+
+    <section class="block">
+      <h2>Notes &amp; limitations</h2>
+      <ul class="notes">
+        {% for note in notes %}<li>{{ note }}</li>{% endfor %}
+        {% if summary.indeterminate %}
+        <li>Not callable: {{ summary.indeterminate | join(', ') }}.</li>
+        {% endif %}
+        <li>Input: {{ filename }}; run {{ run_id }}.</li>
+      </ul>
+    </section>
+
+    <div class="report-foot">
+      <span>PharmCOW · pypgx 0.27 (MIT) · CPIC/PharmGKB content belongs to its authors.</span>
+      <span>Research / educational use only</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
